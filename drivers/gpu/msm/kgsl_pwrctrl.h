@@ -56,7 +56,7 @@
  * After timeout, qos request is cancelled automatically.
  * Changed to 64ms ( 80ms default) to be inline with new GPU idle time.
  */
-#define KGSL_L2PC_QUEUE_TIMEOUT	(64 * 1000)
+#define KGSL_L2PC_QUEUE_TIMEOUT	(80 * 1000)
 
 /*
  * The effective duration of qos request in usecs at wakeup time.
