@@ -1606,6 +1606,7 @@ struct task_struct {
 	 * of this task
 	 */
 	u32 init_load_pct;
+	u64 last_sleep_ts;
 #ifdef CONFIG_PACKAGE_RUNTIME_INFO
 	u64 big_cluster_runtime[HISTORY_WINDOWS];
 	u64 little_cluster_runtime[HISTORY_WINDOWS];
