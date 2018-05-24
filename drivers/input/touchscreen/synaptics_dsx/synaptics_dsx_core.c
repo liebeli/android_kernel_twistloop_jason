@@ -732,6 +732,8 @@ static ssize_t synaptics_rmi4_set_abs_y_axis(struct device *dev,
 	if (input == 0)
 		return -EINVAL;
 
+	input_event(rmi4_data->input_dev, EV_SYN, SYN_CONFIG, input ? WAKEUP_ON : WAKEUP_OFF);
+
 	input_set_abs_params(rmi4_data->input_dev, ABS_MT_POSITION_Y,
 			0, input, 0, 0);
 
