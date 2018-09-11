@@ -132,7 +132,6 @@ struct highfreq_monitor_s {
 	struct timeval tv;
 };
 static struct highfreq_monitor_s highfreq_monitor;
-static struct work_struct highfreq_monitor_work;
 
 #ifndef CONFIG_MSM_PERFORMANCE_CPUFREQ_LIMITS_VOTING_ONLY
 static unsigned int num_online_managed(struct cpumask *mask);
@@ -434,96 +433,6 @@ static int is_high_cpufreq(int cpu, unsigned int cpufreq)
 		freqinfo = &highfreq_monitor.bcluster;
 
 	return  cpufreq >= freqinfo->max_freq;
-}
-
-static void monitor_work_func(struct work_struct *work)
-{
-	int i,  ret = 0;
-	struct cpufreq_policy policy;
-	struct cpu_status *i_cpu_stats;
-
-	get_online_cpus();
-	for_each_online_cpu(i) {
-		i_cpu_stats = &per_cpu(cpu_stats, i);
-		if (cpufreq_get_policy(&policy, i))
-			continue;
-
-		if (cpu_online(i) && (policy.min != i_cpu_stats->min)) {
-			ret = cpufreq_update_policy(i);
-			if (ret)
-				continue;
-		}
-	}
-	put_online_cpus();
-}
-
-static void highfreq_monitor_func(unsigned long data)
-{
-	int i;
-	struct cpu_status *i_cpu_stats;
-	unsigned long alarm_interval = highfreq_monitor.hfreq_max_duration;
-
-	if (!highfreq_monitor.enable)
-		return;
-
-	highfreq_monitor.count++;
-	if (!highfreq_monitor.monitor_policy) {
-		printk("high freq duration to long... start time %lu, %lu\n",
-				highfreq_monitor.tv.tv_sec, highfreq_monitor.tv.tv_usec);
-		if (alarm_interval < 5)
-			alarm_interval = 5;
-
-		highfreq_monitor.timer.expires = jiffies + alarm_interval * HZ;
-		add_timer(&highfreq_monitor.timer);
-	} else if (highfreq_monitor.monitor_policy) {
-		for (i = 0; i < num_present_cpus(); i++) {
-			i_cpu_stats = &per_cpu(cpu_stats, i);
-			i_cpu_stats->min = 0;
-		}
-		highfreq_monitor.active = 0;
-		printk("NOTICE: cpu_min_freq reset to 0 now\n");
-		queue_work_on(0, system_long_wq, &highfreq_monitor_work);
-	}
-}
-
-static int init_highfreq_monitor(struct highfreq_monitor_s *highfreq_monitor)
-{
-	int i;
-	struct cpufreq_policy policy;
-
-	spin_lock_init(&highfreq_monitor->spinlock);
-	highfreq_monitor->timer.function = highfreq_monitor_func;
-	highfreq_monitor->hfreq_max_duration = 180;
-	highfreq_monitor->active = 0;
-	highfreq_monitor->tv.tv_sec = 0;
-	highfreq_monitor->tv.tv_usec = 0;
-	init_timer(&highfreq_monitor->timer);
-	highfreq_monitor->enable = 1;
-	highfreq_monitor->monitor_policy = 1;
-	highfreq_monitor->count = 0;
-	INIT_WORK(&highfreq_monitor_work, monitor_work_func);
-
-	get_online_cpus();
-	for_each_online_cpu(i) {
-		if (cpufreq_get_policy(&policy, i))
-			continue;
-
-		if (i < (num_present_cpus() >> 1)) {
-			highfreq_monitor->lcluster.max_freq = policy.cpuinfo.max_freq;
-			highfreq_monitor->lcluster.min_freq = policy.cpuinfo.min_freq;
-		} else {
-			highfreq_monitor->bcluster.max_freq = policy.cpuinfo.max_freq;
-			highfreq_monitor->bcluster.min_freq = policy.cpuinfo.min_freq;
-		}
-	}
-	put_online_cpus();
-
-	printk("high freq monitor init:b-%d %d l-%d %d\n",
-			highfreq_monitor->bcluster.max_freq,
-			highfreq_monitor->bcluster.min_freq,
-			highfreq_monitor->lcluster.max_freq,
-			highfreq_monitor->lcluster.min_freq);
-	return 0;
 }
 
 static int set_highfreq_monitor(const char *buf, const struct kernel_param *kp)
