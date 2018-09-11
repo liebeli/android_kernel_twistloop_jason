@@ -702,7 +702,7 @@
 
 				qcom,cpr-fuse-corners = <5>;
 				qcom,cpr-fuse-combos = <40>;
-				qcom,cpr-speed-bins = <4>;
+				qcom,cpr-speed-bins = <5>;
 				qcom,cpr-speed-bin-corners = <17 17 0 17 17>;
 				qcom,cpr-corners =
 					/* Speed bin 0 */
@@ -875,7 +875,7 @@
 
 				qcom,cpr-fuse-corners = <5>;
 				qcom,cpr-fuse-combos = <40>;
-				qcom,cpr-speed-bins = <4>;
+				qcom,cpr-speed-bins = <5>;
 				qcom,cpr-speed-bin-corners = <20 20 0 20 20>;
 				qcom,cpr-corners =
 					/* Speed-bin 0 */
